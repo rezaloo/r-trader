@@ -10,7 +10,7 @@ public class Main {
 		// TODO: Read-only mode
 
 		try {
-			// Wait until account is initialized
+			// Wait until acount is initialized
 			TAccount account = new TAccount();
 
 			while (true) {
@@ -34,7 +34,7 @@ public class Main {
 
 		} catch (Exception e) {
 			e.printStackTrace();
-			Util.sendNotification("Unexpected application exception: " + e + "\n\nExiting immediately.");
+			Util.sendNotification("Unexpected application exception: " + e + "\n\n Exiting immediately.");
 		}
 
 	}
