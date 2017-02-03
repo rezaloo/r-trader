@@ -37,10 +37,6 @@ public class TAccount {
 		initialize();
 	}
 
-	public double getSpPrice() {
-		return spPrice;
-	}
-
 	public synchronized String toString() {
 		Timestamp timestamp = new Timestamp(System.currentTimeMillis());
 
@@ -88,8 +84,6 @@ public class TAccount {
 		}
 	}
 
-	// Open new weekly positions in a way that allows for the provided margin
-	// for the new positions
 	public synchronized void openPositions(int marginPerPosition, int maxDaysOut) {
 
 		// Calculate the number of positions to open
@@ -116,7 +110,7 @@ public class TAccount {
 			if (Algorithm.needsToBeClosed(position, riskFactor, lossLimit)) {
 
 				Util.sendNotification("Closing position: " + position);
-				closePosition(position);
+				placeBuyOrder(position);
 			}
 		}
 	}
@@ -177,8 +171,7 @@ public class TAccount {
 
 	public synchronized void closeActiveOrders() {
 
-		// TODO: Optimization to only close orders for which the mid-point has
-		// changed
+		// TODO: Optimization to only close orders for which the mid-point has changed
 		for (TOrder order : placedOrders.values()) {
 			if (order.isActive()) {
 				this.connectionHandler.cancelOrder(order.getId());
@@ -207,8 +200,6 @@ public class TAccount {
 	public void initialize() {
 		this.connectionHandler.registerForUpdates();
 	}
-
-
 
 	public double updateSpPrice() {
 		try {
@@ -251,8 +242,7 @@ public class TAccount {
 		}
 	}
 
-	private void closePosition(TPosition position) {
-
+	private void placeBuyOrder(TPosition position) {
 		this.connectionHandler.placeBuyOrder(position);
 	}
 

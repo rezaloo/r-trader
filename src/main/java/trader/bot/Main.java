@@ -14,9 +14,11 @@ public class Main {
 			TAccount account = new TAccount();
 
 			while (true) {
-			
+
 				System.out.println(account);
 				Thread.sleep(60000);
+
+				account.updateSpPrice();
 
 				if (account.isInitialized()) {
 
