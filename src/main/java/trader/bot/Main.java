@@ -18,7 +18,7 @@ public class Main {
 				System.out.println(account);
 				Thread.sleep(60000);
 
-				if (account.isInitialized() && (account.updateSpPrice() !=0) {
+				if (account.isInitialized() && (account.updateSpPrice() !=0)) {
 
 					// Close active orders so that they can be adjusted
 					account.closeActiveOrders();
