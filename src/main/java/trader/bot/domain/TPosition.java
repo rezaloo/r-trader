@@ -29,11 +29,11 @@ public class TPosition {
 	}
 
 	public double getAvgCost() {
-		return position.averageCost();
+		return (double)Math.round(position.averageCost() * 10000d) / 10000d;
 	}
 
 	public double getMarketValue() {
-		return position.marketValue();
+		return (double)Math.round(position.marketValue() * 10000d) / 10000d;
 	}
 
 	public String getDescription() {
@@ -49,7 +49,8 @@ public class TPosition {
 	}
 
 	public double getAvgValue() {
-		return (getMarketValue() / getNumberOfContracts());
+		double value = (getMarketValue() / getNumberOfContracts());
+		return (double)Math.round(value * 10000d) / 10000d;
 	}
 
 	public int getNumberOfContracts() {

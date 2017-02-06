@@ -28,7 +28,7 @@ public class TContract implements IOptHandler {
 
 	public TContract(Contract contract) {
 		this.contract = contract;
-		this.daysToTarget = targetDaysDelta(contract, 7);
+		this.daysToTarget = Algorithm.targetDaysDelta(contract, 7);
 	}
 
 	public String toString() {
@@ -45,14 +45,13 @@ public class TContract implements IOptHandler {
 
 	public double getMidPointPrice() throws NoMarketDataException {
 		double price = 0;
+		double calcBid = 0;
+		double calcAsk = 0;
 
-		if (bid >= 0 && ask >= 0) {
-			price = ((bid + ask) / 2);
-		} 
-		
-//		else if (high >= 0) {
-//			price = high;
-//		}
+		if (bid >= 0) { calcBid = bid; }
+		if (ask >= 0) { calcAsk = ask; }
+
+		price = ((calcBid + calcAsk) / 2);
 
 		return Algorithm.normalizePrice(price);
 	}
@@ -82,28 +81,7 @@ public class TContract implements IOptHandler {
 		}
 	}
 
-	private static double targetDaysDelta(Contract contract, int daysDelta) {
-		String expiryDateString = contract.lastTradeDateOrContractMonth();
 
-		Date weekFromNow = new Date();
-		Calendar calendar = Calendar.getInstance();
-		calendar.setTime(weekFromNow);
-		calendar.add(Calendar.DATE, daysDelta);
-		weekFromNow = calendar.getTime();
-
-		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
-		Date expiryDate;
-
-		try {
-			expiryDate = formatter.parse(expiryDateString);
-		} catch (ParseException e) {
-			throw new RuntimeException();
-		}
-
-		long delta = Util.getDateDiff(weekFromNow, expiryDate, TimeUnit.DAYS);
-
-		return delta;
-	}
 
 	// -------------------- Interface methods not being used
 

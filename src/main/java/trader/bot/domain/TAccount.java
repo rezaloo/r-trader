@@ -88,9 +88,9 @@ public class TAccount {
 
 		// Calculate the number of positions to open
 		int callsToOpen = Algorithm.getOpenPositionRoom(getNumberOfActiveSellOrders(), netLiqValue,
-				getNumberOfContracts(CALLS), marginPerPosition);
+				getNumberOfOpenPositions(CALLS), marginPerPosition);
 		int putsToOpen = Algorithm.getOpenPositionRoom(getNumberOfActiveSellOrders(), netLiqValue,
-				getNumberOfContracts(PUTS), marginPerPosition);
+				getNumberOfOpenPositions(PUTS), marginPerPosition);
 
 		System.out.println("---\n" + "Calls to open: " + callsToOpen + "\nPuts to open : " + putsToOpen + "\n---\n");
 
@@ -212,12 +212,13 @@ public class TAccount {
 		return spPrice;
 	}
 
-	private synchronized int getNumberOfContracts(String contractType) {
+	private synchronized int getNumberOfOpenPositions(String contractType) {
 		int count = 0;
 
 		for (TPosition position : openPositions.values()) {
 			// Count naked positions only
-			if (position.getType().equals(contractType) && (position.getMarketValue() < 0)) {
+			if (position.getType().equals(contractType)
+					&& (position.getMarketValue() <= 0)) {
 				count = count + position.getNumberOfContracts();
 			}
 		}
@@ -230,7 +231,8 @@ public class TAccount {
 			this.connectionHandler.placeBullPutOrder(putLongTarget, putShortTarget, number,
 					Algorithm.calculateBullPutPrice(putLongTarget, putShortTarget));
 		} catch (NoMarketDataException e) {
-			System.out.println("!!! - New put positions could not be opened due to unavailability of market data");
+			System.out.println("!!! - New put positions could not be opened due to unavailability of market data: "
+					+ e.getMessage());
 		}
 	}
 
@@ -238,7 +240,8 @@ public class TAccount {
 		try {
 			this.connectionHandler.placeNakedSellOrder(callShortTarget, number);
 		} catch (NoMarketDataException e) {
-			System.out.println("!!! - New put positions could not be opened due to unavailability of market data");
+			System.out.println("!!! - New call positions could not be opened due to unavailability of market data: "
+					+ e.getMessage());
 		}
 	}
 

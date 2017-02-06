@@ -172,7 +172,7 @@ public class Broker implements IConnectionHandler, IAccountHandler, IContractDet
 	}
 	
 	private void connect() {
-		getController().connect("127.0.0.1", 4001, 0, null);
+		getController().connect("127.0.0.1", 7496, 0, null);
 	}
 
 	private void requestContractDetails() {

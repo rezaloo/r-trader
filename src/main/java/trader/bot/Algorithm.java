@@ -1,6 +1,11 @@
 package trader.bot;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.concurrent.TimeUnit;
 
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
@@ -94,7 +99,7 @@ public class Algorithm {
 		price = price / 100;
 
 		if (price <= 0) {
-			throw new NoMarketDataException("Bull put price calculation lead to a value of 0.");
+			throw new NoMarketDataException("Order price calculation lead to a value of 0.");
 		}
 
 		return price;
@@ -118,6 +123,29 @@ public class Algorithm {
 		}
 
 		return needsToBeClosed;
+	}
+
+	public static double targetDaysDelta(Contract contract, int daysDelta) {
+		String expiryDateString = contract.lastTradeDateOrContractMonth();
+
+		Date weekFromNow = new Date();
+		Calendar calendar = Calendar.getInstance();
+		calendar.setTime(weekFromNow);
+		calendar.add(Calendar.DATE, daysDelta);
+		weekFromNow = calendar.getTime();
+
+		SimpleDateFormat formatter = new SimpleDateFormat("yyyyMMdd");
+		Date expiryDate;
+
+		try {
+			expiryDate = formatter.parse(expiryDateString);
+		} catch (ParseException e) {
+			throw new RuntimeException();
+		}
+
+		long delta = Util.getDateDiff(weekFromNow, expiryDate, TimeUnit.DAYS);
+
+		return delta;
 	}
 
 	private static boolean isTargetStrike(Contract contract, double underLyingPrice) {
@@ -144,5 +172,7 @@ public class Algorithm {
 
 		return (isInStrikeRange && !isInMoney);
 	}
+
+
 
 }
