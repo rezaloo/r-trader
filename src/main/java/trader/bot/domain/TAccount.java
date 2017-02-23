@@ -17,7 +17,9 @@ public class TAccount {
 	public static final String CALLS = "C";
 	public static final String PUTS = "P";
 
-	Broker connectionHandler = null;
+	private static TAccount instance = null;
+
+	private Broker connectionHandler = null;
 	private String name = "";
 	private int netLiqValue = 0;
 
@@ -28,13 +30,18 @@ public class TAccount {
 	private TContract putShortTarget = null;
 	private TContract callShortTarget = null;
 
+    private Timestamp targetTimeStamp;
+
 	private double spPrice = 0;
 
-	public TAccount() {
-		connectionHandler = new Broker(this);
 
-		updateSpPrice();
-		initialize();
+    public static TAccount getInstance() {
+		if(instance == null) {
+			instance = new TAccount();
+		}
+
+		return instance;
+
 	}
 
 	public synchronized String toString() {
@@ -52,7 +59,7 @@ public class TAccount {
 		}
 
 		value = value + "\n--- Target Contracts:\n";
-		value = value + "expiry,strike,type,bid,ask,close,high,low" + "\n";
+		value = value + "expiry, strike, type, bid, ask" + "\n";
 		value += putLongTarget + "\n";
 		value += putShortTarget + "\n";
 		value += callShortTarget + "\n";
@@ -64,6 +71,26 @@ public class TAccount {
 		value = value + "---\n\n";
 
 		return value;
+	}
+
+    public Timestamp getTargetTimeStamp() {
+        return targetTimeStamp;
+    }
+
+	public double getSpPrice() {
+		return spPrice;
+	}
+
+	public TContract getPutLongTarget() {
+		return putLongTarget;
+	}
+
+	public TContract getPutShortTarget() {
+		return putShortTarget;
+	}
+
+	public TContract getCallShortTarget() {
+		return callShortTarget;
 	}
 
 	public synchronized void setCallShortTarget(TContract callShortTarget) {
@@ -87,20 +114,24 @@ public class TAccount {
 	public synchronized void openPositions(int marginPerPosition, int maxDaysOut) {
 
 		// Calculate the number of positions to open
-		int callsToOpen = Algorithm.getOpenPositionRoom(getNumberOfActiveSellOrders(), netLiqValue,
-				getNumberOfOpenPositions(CALLS), marginPerPosition);
-		int putsToOpen = Algorithm.getOpenPositionRoom(getNumberOfActiveSellOrders(), netLiqValue,
-				getNumberOfOpenPositions(PUTS), marginPerPosition);
+		int callsToOpen = getRoom(marginPerPosition, CALLS);
+		int putsToOpen = getRoom(marginPerPosition, PUTS);
 
 		System.out.println("---\n" + "Calls to open: " + callsToOpen + "\nPuts to open : " + putsToOpen + "\n---\n");
 
-		if (callsToOpen > 0) {
-			openNakedCall(callsToOpen);
-		}
+	// TODO: Toggling to read-only
+	//	if (callsToOpen > 0) {
+	//		openNakedCall(callsToOpen);
+	//	}
 
-		if (putsToOpen > 0) {
-			openPutSpread(putsToOpen);
-		}
+	//	if (putsToOpen > 0) {
+	//		openPutSpread(putsToOpen);
+	//	}
+	}
+
+	public int getRoom(int marginPerPosition, String type) {
+		return Algorithm.getOpenPositionRoom(getNumberOfActiveSellOrders(), netLiqValue,
+				getNumberOfOpenPositions(type), marginPerPosition);
 	}
 
 	public synchronized void closePositions(double riskFactor, int lossLimit) {
@@ -109,8 +140,10 @@ public class TAccount {
 		for (TPosition position : openPositions.values()) {
 			if (Algorithm.needsToBeClosed(position, riskFactor, lossLimit)) {
 
-				Util.sendNotification("Closing position: " + position);
-				placeBuyOrder(position);
+				System.out.println("--- " + "Closing position: " + position);
+
+				// TODO: Toggling to read-only
+				// placeBuyOrder(position);
 			}
 		}
 	}
@@ -121,10 +154,6 @@ public class TAccount {
 
 	public synchronized void setName(String name) {
 		this.name = name;
-	}
-
-	public synchronized int getNetLiqValue() {
-		return netLiqValue;
 	}
 
 	public synchronized void setNetLiqValue(int cashBalance) {
@@ -169,12 +198,16 @@ public class TAccount {
 		return number;
 	}
 
-	public synchronized void closeActiveOrders() {
+	public synchronized void closeFilledAndActiveOrders() {
 
 		// TODO: Optimization to only close orders for which the mid-point has changed
 		for (TOrder order : placedOrders.values()) {
 			if (order.isActive()) {
-				this.connectionHandler.cancelOrder(order.getId());
+
+				// TODO: Toggling to read-only
+				// this.connectionHandler.cancelOrder(order.getId());
+			} else if (order.isFilled()) {
+				placedOrders.remove(order.getId());
 			}
 		}
 	}
@@ -187,6 +220,9 @@ public class TAccount {
 			connectionHandler.registerForUpdates(putLongTarget);
 			connectionHandler.registerForUpdates(putShortTarget);
 			connectionHandler.registerForUpdates(callShortTarget);
+
+			targetTimeStamp = new Timestamp(System.currentTimeMillis());
+
 		} catch (TargetContractNotFoundException e) {
 
 			System.out.println("!!! - Target contracts not found.");
@@ -212,13 +248,21 @@ public class TAccount {
 		return spPrice;
 	}
 
+
+	private TAccount() {
+		connectionHandler = new Broker(this);
+
+		updateSpPrice();
+		initialize();
+	}
+
 	private synchronized int getNumberOfOpenPositions(String contractType) {
 		int count = 0;
 
 		for (TPosition position : openPositions.values()) {
 			// Count naked positions only
 			if (position.getType().equals(contractType)
-					&& (position.getMarketValue() <= 0)) {
+					&& (position.getMarketPosition() < 0)) {
 				count = count + position.getNumberOfContracts();
 			}
 		}

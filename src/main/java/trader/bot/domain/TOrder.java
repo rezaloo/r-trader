@@ -44,6 +44,11 @@ public class TOrder implements IOrderHandler {
 
 		return isActive;
 	}
+
+	public boolean isFilled() {
+		return (status == OrderStatus.Filled);
+	}
+
 	
 	public boolean isSellOrder() {
 		return (order.action() == Action.SELL);

@@ -1,7 +1,10 @@
 package trader.bot;
 
 import trader.bot.domain.TAccount;
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
 
+@SpringBootApplication(scanBasePackages = {"me.ramswaroop.jbot", "trader.bot"})
 public class Main {
 	public static void main(String[] args) {
 
@@ -9,9 +12,11 @@ public class Main {
 		// TODO: Use log4J
 		// TODO: Read-only mode
 
+		SpringApplication.run(Main.class, args);
+
 		try {
 			// Wait until acount is initialized
-			TAccount account = new TAccount();
+			TAccount account = TAccount.getInstance();
 
 			while (true) {
 
@@ -21,14 +26,13 @@ public class Main {
 				if (account.isInitialized() && (account.updateSpPrice() !=0)) {
 
 					// Close active orders so that they can be adjusted
-					account.closeActiveOrders();
+					account.closeFilledAndActiveOrders();
 
 					// Open new weekly positions as margin permits
 					account.openPositions(25000, 7);
 
-					// Close any positions with a loss of more than 200%, unless
-					// the loss is above $1000
-					account.closePositions(3, 1000);
+					// Close positions that are in trouble
+					account.closePositions(4, 1000);
 				} 
 			}
 

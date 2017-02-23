@@ -17,94 +17,100 @@ import trader.bot.exceptions.NoMarketDataException;
 
 public class TContract implements IOptHandler {
 
-	private Contract contract;
-	private double daysToTarget;
+    private Contract contract;
+    private double daysToTarget;
 
-	private double bid = 0;
-	private double ask = 0;
-	private double close = 0;
-	private double high = 0;
-	private double low = 0;
+    private double bid = 0;
+    private double ask = 0;
+    private double close = 0;
+    private double high = 0;
+    private double low = 0;
 
-	public TContract(Contract contract) {
-		this.contract = contract;
-		this.daysToTarget = Algorithm.targetDaysDelta(contract, 7);
-	}
+    public TContract(Contract contract) {
+        this.contract = contract;
+        this.daysToTarget = Algorithm.targetDaysDelta(contract, 7);
+    }
 
-	public String toString() {
-		String value = contract.lastTradeDateOrContractMonth();
-		value = value + "," + contract.strike();
-		value = value + "," + contract.right();
-		value = value + "," + bid + "," + ask + "," + close + "," + high + "," + low;
-		return value;
-	}
+    public String toString() {
+        String value = contract.lastTradeDateOrContractMonth();
+        value = value + " ," + contract.strike();
+        value = value + " ," + contract.right();
+        value = value + " ," + bid + " ," + ask;
+        return value;
+    }
 
-	public double getDaysToTarget() {
-		return daysToTarget;
-	}
+    public double getDaysToTarget() {
+        return daysToTarget;
+    }
 
-	public double getMidPointPrice() throws NoMarketDataException {
-		double price = 0;
-		double calcBid = 0;
-		double calcAsk = 0;
+    public double getMidPointPrice() throws NoMarketDataException {
+        double price = 0;
 
-		if (bid >= 0) { calcBid = bid; }
-		if (ask >= 0) { calcAsk = ask; }
+        double calcAsk = 0;
+        double calcBid = 0;
 
-		price = ((calcBid + calcAsk) / 2);
+        if (ask >= 0) {
+            calcAsk = ask;
+        }
+        if (bid >= 0) {
+            calcBid = bid;
+        } else if (ask >= 0) {
+            calcBid = ask;
+        }
 
-		return Algorithm.normalizePrice(price);
-	}
+        price = ((calcBid + calcAsk) / 2);
 
-	public Contract getContract() {
-		return this.contract;
-	}
+        return Algorithm.normalizePrice(price);
+    }
 
-	@Override
-	public void tickPrice(TickType tickType, double price, int canAutoExecute) {
+    public Contract getContract() {
+        return this.contract;
+    }
 
-		switch (tickType) {
-		case BID:
-			bid = price;
-			break;
-		case ASK:
-			ask = price;
-			break;
-		case CLOSE:
-			close = price;
-		case HIGH:
-			high = price;
-		case LOW:
-			low = price;
-		default:
-			break;
-		}
-	}
+    @Override
+    public void tickPrice(TickType tickType, double price, int canAutoExecute) {
+
+        switch (tickType) {
+            case BID:
+                bid = price;
+                break;
+            case ASK:
+                ask = price;
+                break;
+            case CLOSE:
+                close = price;
+            case HIGH:
+                high = price;
+            case LOW:
+                low = price;
+            default:
+                break;
+        }
+    }
 
 
+    // -------------------- Interface methods not being used
 
-	// -------------------- Interface methods not being used
+    @Override
+    public void tickSize(TickType tickType, int size) {
 
-	@Override
-	public void tickSize(TickType tickType, int size) {
+    }
 
-	}
+    @Override
+    public void tickString(TickType tickType, String value) {
+    }
 
-	@Override
-	public void tickString(TickType tickType, String value) {
-	}
+    @Override
+    public void tickSnapshotEnd() {
+    }
 
-	@Override
-	public void tickSnapshotEnd() {
-	}
+    @Override
+    public void marketDataType(MktDataType marketDataType) {
+    }
 
-	@Override
-	public void marketDataType(MktDataType marketDataType) {
-	}
-
-	@Override
-	public void tickOptionComputation(TickType tickType, double impliedVol, double delta, double optPrice,
-			double pvDividend, double gamma, double vega, double theta, double undPrice) {
-	}
+    @Override
+    public void tickOptionComputation(TickType tickType, double impliedVol, double delta, double optPrice,
+                                      double pvDividend, double gamma, double vega, double theta, double undPrice) {
+    }
 
 }
