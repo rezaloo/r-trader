@@ -11,6 +11,7 @@ public class Main {
 		// TODO: Move parameters below into general configuration class
 		// TODO: Use log4J
 		// TODO: Read-only mode
+		// TODO: Replace notifications with Both calls
 
 		SpringApplication.run(Main.class, args);
 

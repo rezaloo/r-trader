@@ -6,6 +6,8 @@ import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.concurrent.TimeUnit;
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
 
 import com.ib.client.Contract;
 import com.ib.client.ContractDetails;
@@ -148,6 +150,16 @@ public class Algorithm {
 		return delta;
 	}
 
+	// TODO: Move to Util
+	// Calculates the % that the target contract is OOM w.r.t. the latest given S&P price
+	public static String oom(double strike, double spPrice) {
+		double diff = spPrice - strike;
+		double perDiff = (diff / spPrice);
+
+		NumberFormat formatter = new DecimalFormat("%0.00");
+		return formatter.format(perDiff);
+	}
+
 	private static boolean isTargetStrike(Contract contract, double underLyingPrice) {
 
 		boolean isInStrikeRange = false;
@@ -172,7 +184,4 @@ public class Algorithm {
 
 		return (isInStrikeRange && !isInMoney);
 	}
-
-
-
 }

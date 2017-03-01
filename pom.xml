@@ -71,8 +71,15 @@
 			<artifactId>spring-boot-starter-test</artifactId>
 			<version>1.5.1.RELEASE</version>
 		</dependency>
+		<dependency>
+			<groupId>org.jtextutil</groupId>
+			<artifactId>org-jtextutil</artifactId>
+			<version>0.3.3</version>
+		</dependency>
+		<dependency>
+			<groupId>commons-lang</groupId>
+			<artifactId>commons-lang</artifactId>
+			<version>2.6</version>
+		</dependency>
 	</dependencies>
-
-
-
 </project>

@@ -24,10 +24,12 @@ public class Util {
 		try {
 			String response = null;
 
-			response = Unirest.get("http://finance.google.com/finance/info?client=ig&q=.INX")
+			response = Unirest.get("http://finance.google.com/finance/info?q=.INX")
 					.header("authorization", "WpbO0IWzDWSLxgrL1Utg9WOxmmrttep4B6wqqISg")
 					.header("cache-control", "no-cache").header("postman-token", "e90ef285-d1f8-2f1e-fe42-79bef6e6e23b")
 					.asString().getBody();
+
+			System.out.println("!!! Quote response: " + response);
 
 			response = response.substring(5);
 			response = response.replace(']', ' ');
@@ -38,6 +40,7 @@ public class Util {
 			value = Double.parseDouble(stringValue.trim());
 
 		} catch (Exception e) {
+			System.out.println("!!! Exception in getting S&P 500 price");
 			throw new NoMarketDataException("Could not get price of INX.");
 		}
 

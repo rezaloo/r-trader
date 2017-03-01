@@ -70,45 +70,53 @@ public class RTypeCommand {
 
         RichMessage response = new RichMessage("Sorry, don't understand what you are looking for.");;
 
-        if(text.equals("quote")) {
-            response = getQuote();
-        } else if(text.equals("target")) {
-            response = getTargets();
+        if(text.equals("quote") || text.equals("q")) {
+            response = getQuote(account);
+        } else if(text.equals("contracts") || text.equals("c")) {
+            response = getContracts(account);
+        } else if(text.equals("positions") || text.equals("p")) {
+            response = getPositions(account);
+        } else if(text.equals("orders") || text.equals("o")) {
+            response = getOrders(account);
         }
-
 
         return response.encodedMessage();
     }
 
-    private RichMessage getTargets() {
+    public static RichMessage getPositions(TAccount tAccount) {
 
-        String response = "";
+        String response = tAccount.positionsToString();
+        return buildResponse(response);
+    }
+
+    public static RichMessage getContracts(TAccount tAccount) {
+
+        String response = tAccount.contractsToString() + "\n";
 
         // TODO: Parameterize margins
-        int putsToOpen = account.getRoom(25000, TAccount.PUTS);
-        int callsToOpen = account.getRoom(25000, TAccount.CALLS);
+        int putsToOpen = tAccount.getRoom(25000, TAccount.PUTS);
+        int callsToOpen = tAccount.getRoom(25000, TAccount.CALLS);
 
-        response += "\n------------------------------------------------------------------\n";
-        response += "S&P 500 Price is " + account.getSpPrice();
-        response += "\n------------------------------------------------------------------\n";
-        response += "Target last updated at: " + account.getTargetTimeStamp();
-        response += "\n------------------------------------------------------------------\n";
-        response += "# of Bull Puts to Open: " + putsToOpen + "\n";
-        response += "Bull Put Leg 1: " + account.getPutLongTarget() + "\n";
-        response += "Bull Put Leg 2: " + account.getPutShortTarget();
-        response += "\n------------------------------------------------------------------\n";
-        response += "# of Calls to Open: " + callsToOpen + "\n";
-        response += "Call Leg 1: " + account.getCallShortTarget();
-        response += "\n------------------------------------------------------------------\n";
+        response += "Room for BP: " + putsToOpen + "\n";
+        response += "Room for C : " + callsToOpen + "\n";
 
         return buildResponse(response);
     }
 
-    private RichMessage getQuote() {
-        return buildResponse("S&P 500 Price is " + account.getSpPrice());
+    public static RichMessage getOrders(TAccount tAccount) {
+
+        String response = tAccount.ordersToString();
+        return buildResponse(response);
     }
 
-    private RichMessage buildResponse(String message) {
+    public static RichMessage getQuote(TAccount tAccount) {
+        return buildResponse("S&P 500 Price is " + tAccount.getSpPrice());
+    }
+
+    public static RichMessage buildResponse(String message) {
+
+        message = "```" + message + "```\n";
+
         RichMessage richMessage = new RichMessage(message);
         richMessage.setResponseType("in_channel");
 

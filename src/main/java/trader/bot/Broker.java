@@ -238,7 +238,4 @@ public class Broker implements IConnectionHandler, IAccountHandler, IContractDet
 	@Override
 	public void show(String string) {
 	}
-
-	
-
 }

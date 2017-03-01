@@ -3,22 +3,13 @@ package trader.bot.domain;
 import com.ib.client.Contract;
 import com.ib.controller.Position;
 
+import java.text.DecimalFormat;
+import java.text.NumberFormat;
+import java.util.ArrayList;
+
 public class TPosition {
 
 	private Position position;
-
-	public String toString() {
-
-		String value = "   - description: " + getDescription() + "\n";
-		value = value + "   - type: " + getType() + "\n";
-		value = value + "   - average cost: " + getAvgCost() + "\n";
-		value = value + "   - market position: " + getMarketPosition() + "\n";
-		value = value + "   - market value: " + getMarketValue() + "\n";
-		value = value + "   - average value: " + getAvgValue() + "\n";
-		value = value + "   - strike: " + getStrike() + "\n";
-
-		return value;
-	}
 
 	public TPosition(Position position) {
 		this.position = position;
@@ -29,11 +20,11 @@ public class TPosition {
 	}
 
 	public double getAvgCost() {
-		return (double)Math.round(position.averageCost() * 10000d) / 10000d;
+		return Math.abs(Math.round(position.averageCost() * 10000d) / 10000d);
 	}
 
 	public double getMarketValue() {
-		return (double)Math.round(position.marketValue() * 10000d) / 10000d;
+		return Math.abs(Math.round(position.marketValue() * 10000d) / 10000d);
 	}
 
 	public String getDescription() {
@@ -42,10 +33,6 @@ public class TPosition {
 
 	public String getType() {
 		return position.contract().getRight();
-	}
-
-	private double getStrike() {
-		return position.contract().strike();
 	}
 
 	public double getAvgValue() {
@@ -59,5 +46,22 @@ public class TPosition {
 
 	public Contract getContract() {
 		return this.position.contract();
+	}
+
+	public ArrayList getAsObjectArray() {
+
+		Contract contract = position.contract();
+
+		NumberFormat dFormat = new DecimalFormat("$0.00");
+
+		ArrayList objectArray = new ArrayList();
+		objectArray.add((Double)position.position());
+		objectArray.add(contract.lastTradeDateOrContractMonth());
+		objectArray.add((Double)contract.strike());
+		objectArray.add(contract.right());
+		objectArray.add(dFormat.format(getAvgCost()));
+		objectArray.add(dFormat.format(getAvgValue()));
+
+		return objectArray;
 	}
 }

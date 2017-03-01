@@ -33,9 +33,9 @@ public class TContract implements IOptHandler {
 
     public String toString() {
         String value = contract.lastTradeDateOrContractMonth();
-        value = value + " ," + contract.strike();
-        value = value + " ," + contract.right();
-        value = value + " ," + bid + " ," + ask;
+        value = value + "\t,\t" + contract.strike();
+        value = value + "\t,\t" + contract.right();
+        value = value + "\t,\t" + bid + "\t,\t" + ask;
         return value;
     }
 
@@ -65,6 +65,14 @@ public class TContract implements IOptHandler {
 
     public Contract getContract() {
         return this.contract;
+    }
+
+    public double getAsk() {
+        return ask;
+    }
+
+    public double getBid() {
+        return bid;
     }
 
     @Override
