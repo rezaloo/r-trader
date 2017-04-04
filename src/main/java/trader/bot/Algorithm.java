@@ -21,7 +21,7 @@ import trader.bot.exceptions.TargetContractNotFoundException;
 
 public class Algorithm {
 
-	public static void selectTargetContract(TAccount account, ArrayList<ContractDetails> list, double underLyingPrice)
+	public static void selectTargetContract(TAccount account, ArrayList<TContract> contracts, double underLyingPrice)
 			throws TargetContractNotFoundException {
 
 		double lowestPut = 10000;
@@ -32,14 +32,13 @@ public class Algorithm {
 		TContract putShortTarget = null;
 		TContract callShortTarget = null;
 
-		for (ContractDetails contractDetail : list) {
-			Contract contract = contractDetail.contract();
-			TContract targetContract = new TContract(contract);
+		for (TContract targetContract : contracts) {
+			Contract contract = targetContract.getContract();
 
 			double daysDelta = targetContract.getDaysToTarget();
 			double strike = contract.strike();
 
-			if (isTargetStrike(contractDetail.contract(), underLyingPrice) && ((daysDelta == 0) || (daysDelta == -1))) {
+			if (isTargetStrike(contract, underLyingPrice) && ((daysDelta == 0) || (daysDelta == -1))) {
 
 				if (contract.right() == Right.Put) {
 					if (strike < lowestPut) {

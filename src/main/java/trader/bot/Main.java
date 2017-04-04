@@ -10,31 +10,22 @@ public class Main {
 
 		// TODO: Move parameters below into general configuration class
 		// TODO: Use log4J
-		// TODO: Read-only mode
 		// TODO: Replace notifications with Both calls
 
 		SpringApplication.run(Main.class, args);
 
 		try {
-			// Wait until acount is initialized
+
 			TAccount account = TAccount.getInstance();
 
 			while (true) {
 
 				System.out.println(account);
-				Thread.sleep(60000);
 
-				if (account.isInitialized() && (account.updateSpPrice() !=0)) {
+				Thread.sleep(10000);
 
-					// Close active orders so that they can be adjusted
-					account.closeFilledAndActiveOrders();
-
-					// Open new weekly positions as margin permits
-					account.openPositions(25000, 7);
-
-					// Close positions that are in trouble
-					account.closePositions(4, 1000);
-				} 
+				account.updateSpPrice();
+				account.checkPositions(4, 1000);
 			}
 
 		} catch (Exception e) {

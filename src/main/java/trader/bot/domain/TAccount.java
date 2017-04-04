@@ -29,6 +29,7 @@ public class TAccount {
 
     private HashMap<String, TPosition> openPositions = new HashMap<String, TPosition>();
     private HashMap<Integer, TOrder> placedOrders = new HashMap<Integer, TOrder>();
+    private ArrayList<TContract> contracts = new ArrayList<TContract>();
 
     private TContract putLongTarget = null;
     private TContract putShortTarget = null;
@@ -40,9 +41,8 @@ public class TAccount {
 
     private TAccount() {
         connectionHandler = new Broker(this);
-
+        connectionHandler.registerForUpdates();
         updateSpPrice();
-        initialize();
     }
 
     public static TAccount getInstance() {
@@ -70,6 +70,17 @@ public class TAccount {
         value = value + ordersToString();
 
         return value;
+    }
+
+    public double updateSpPrice() {
+        try {
+            spPrice = Util.getUnderLyingPrice();
+        } catch (NoMarketDataException e) {
+            System.out.println("!!! Could not get price of SPX.");
+            spPrice = 0;
+        }
+
+        return spPrice;
     }
 
     public synchronized String positionsToString() {
@@ -162,39 +173,18 @@ public class TAccount {
         }
     }
 
-    public synchronized void openPositions(int marginPerPosition, int maxDaysOut) {
-
-        // Calculate the number of positions to open
-        int callsToOpen = getRoom(marginPerPosition, CALLS);
-        int putsToOpen = getRoom(marginPerPosition, PUTS);
-
-        System.out.println("---\n" + "Calls to open: " + callsToOpen + "\nPuts to open : " + putsToOpen + "\n---\n");
-
-        // TODO: Toggling to read-only
-        //	if (callsToOpen > 0) {
-        //		openNakedCall(callsToOpen);
-        //	}
-
-        //	if (putsToOpen > 0) {
-        //		openPutSpread(putsToOpen);
-        //	}
-    }
-
     public int getRoom(int marginPerPosition, String type) {
         return Algorithm.getOpenPositionRoom(getNumberOfActiveSellOrders(), netLiqValue,
                 getNumberOfOpenPositions(type), marginPerPosition);
     }
 
-    public synchronized void closePositions(double riskFactor, int lossLimit) {
+    public synchronized void checkPositions(double riskFactor, int lossLimit) {
 
         // Monitor accounts and close them accordingly
         for (TPosition position : openPositions.values()) {
             if (Algorithm.needsToBeClosed(position, riskFactor, lossLimit)) {
 
                 System.out.println("--- " + "Closing position: " + position);
-
-                // TODO: Toggling to read-only
-                // placeBuyOrder(position);
             }
         }
     }
@@ -219,16 +209,7 @@ public class TAccount {
         return (targeCallsSet && underlyingSet);
     }
 
-    public synchronized void clearTargetContracts() {
-        connectionHandler.unregisterForUpdates(putLongTarget);
-        putLongTarget = null;
 
-        connectionHandler.unregisterForUpdates(putShortTarget);
-        putShortTarget = null;
-
-        connectionHandler.unregisterForUpdates(callShortTarget);
-        callShortTarget = null;
-    }
 
     public synchronized void addPlacedOrder(TOrder placedOrder) {
         placedOrders.put(placedOrder.getId(), placedOrder);
@@ -249,31 +230,17 @@ public class TAccount {
         return number;
     }
 
-    public synchronized void closeFilledAndActiveOrders() {
+    public synchronized void processTargetContracts(ArrayList<ContractDetails> list) {
+        clearTargetContracts();
+        setTargetContracts(list);
+        filterContracts();
 
-        // TODO: Optimization to only close orders for which the mid-point has changed
-        for (TOrder order : placedOrders.values()) {
-            if (order.isActive()) {
-
-                // TODO: Toggling to read-only
-                // this.connectionHandler.cancelOrder(order.getId());
-            } else if (order.isFilled()) {
-                placedOrders.remove(order.getId());
-            }
-        }
+        targetTimeStamp = new Timestamp(System.currentTimeMillis());
     }
 
-    public synchronized void filterTargetContract(ArrayList<ContractDetails> list) {
-        clearTargetContracts();
+    public synchronized void filterContracts() {
         try {
-            Algorithm.selectTargetContract(this, list, this.spPrice);
-
-            connectionHandler.registerForUpdates(putLongTarget);
-            connectionHandler.registerForUpdates(putShortTarget);
-            connectionHandler.registerForUpdates(callShortTarget);
-
-            targetTimeStamp = new Timestamp(System.currentTimeMillis());
-
+            Algorithm.selectTargetContract(this, this.contracts, this.spPrice);
         } catch (TargetContractNotFoundException e) {
 
             System.out.println("!!! - Target contracts not found.");
@@ -284,19 +251,29 @@ public class TAccount {
         }
     }
 
-    public void initialize() {
-        this.connectionHandler.registerForUpdates();
-    }
+    private synchronized void clearTargetContracts() {
 
-    public double updateSpPrice() {
-        try {
-            spPrice = Util.getUnderLyingPrice();
-        } catch (NoMarketDataException e) {
-            System.out.println("!!! Could not get price of SPX.");
-            spPrice = 0;
+        for(TContract contract : contracts) {
+            connectionHandler.unregisterForUpdates(contract);
         }
 
-        return spPrice;
+        contracts.clear();
+
+        putLongTarget = null;
+        putShortTarget = null;
+        callShortTarget = null;
+    }
+
+    private synchronized void setTargetContracts(ArrayList<ContractDetails> list) {
+
+        for(ContractDetails cd : list) {
+
+            if(tc.ExpiryIsSoonerThan("Today + 1 week")) {
+                TContract tc = new TContract(cd.contract());
+                connectionHandler.registerForUpdates(tc);
+                contracts.add(tc);
+            }
+        }
     }
 
     private synchronized int getNumberOfOpenPositions(String contractType) {
@@ -318,29 +295,6 @@ public class TAccount {
         PrintStream ps = new PrintStream(baos);
         textTable.printTable(ps, 1);
         return new String(baos.toByteArray(), StandardCharsets.UTF_8);
-    }
-
-    private synchronized void openPutSpread(int number) {
-        try {
-            this.connectionHandler.placeBullPutOrder(putLongTarget, putShortTarget, number,
-                    Algorithm.calculateBullPutPrice(putLongTarget, putShortTarget));
-        } catch (NoMarketDataException e) {
-            System.out.println("!!! - New put positions could not be opened due to unavailability of market data: "
-                    + e.getMessage());
-        }
-    }
-
-    private synchronized void openNakedCall(int number) {
-        try {
-            this.connectionHandler.placeNakedSellOrder(callShortTarget, number);
-        } catch (NoMarketDataException e) {
-            System.out.println("!!! - New call positions could not be opened due to unavailability of market data: "
-                    + e.getMessage());
-        }
-    }
-
-    private void placeBuyOrder(TPosition position) {
-        this.connectionHandler.placeBuyOrder(position);
     }
 
 }

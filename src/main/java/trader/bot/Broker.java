@@ -46,73 +46,6 @@ public class Broker implements IConnectionHandler, IAccountHandler, IContractDet
 	public void unregisterForUpdates(TContract targetContract) {
 		ibController.cancelOptionMktData(targetContract);
 	}
-
-	public void placeNakedSellOrder(TContract targetContract, int number) throws NoMarketDataException {
-		Contract contract = targetContract.getContract();
-
-		Order order = new Order();
-		order.action(Action.SELL);
-		order.totalQuantity(number);
-		order.lmtPrice(targetContract.getMidPointPrice());
-		order.orderType(OrderType.LMT);
-		order.tif(TimeInForce.DAY);
-
-		TOrder placedOrder = new TOrder(contract, order, OrderStatus.Unknown);
-		Util.sendNotification("Placing naked sell order: " + placedOrder);
-		this.ibController.placeOrModifyOrder(contract, order, placedOrder);
-	}
-
-	public void placeBullPutOrder(TContract putLongTarget, TContract putShortTarget, int number, double price)
-			throws NoMarketDataException {
-		ComboLeg buyLeg = new ComboLeg();
-		buyLeg.action(Action.BUY);
-		buyLeg.ratio(1);
-		buyLeg.conid(putLongTarget.getContract().conid());
-		buyLeg.exchange(putLongTarget.getContract().exchange());
-
-		ComboLeg sellLeg = new ComboLeg();
-		sellLeg.action(Action.SELL);
-		sellLeg.ratio(1);
-		sellLeg.conid(putShortTarget.getContract().conid());
-		sellLeg.exchange(putShortTarget.getContract().exchange());
-
-		Contract comboContract = new Contract();
-		comboContract.currency(putLongTarget.getContract().currency());
-		comboContract.exchange(putLongTarget.getContract().exchange());
-		comboContract.symbol(putLongTarget.getContract().symbol());
-		comboContract.localSymbol(putLongTarget.getContract().localSymbol());
-		comboContract.right(putLongTarget.getContract().right());
-		comboContract.secType(SecType.BAG);
-
-		comboContract.comboLegs().add(buyLeg);
-		comboContract.comboLegs().add(sellLeg);
-
-		Order order = new Order();
-		order.totalQuantity(number);
-		order.lmtPrice(price);
-
-		TOrder placedOrder = new TOrder(comboContract, order, OrderStatus.Unknown);
-		Util.sendNotification("Placing bull put order: " + placedOrder);
-		this.ibController.placeOrModifyOrder(comboContract, order, placedOrder);
-	}
-
-	public void placeBuyOrder(TPosition position) {
-		Contract contract = position.getContract();
-
-		Order order = new Order();
-		order.action(Action.BUY);
-		order.totalQuantity(Math.abs(position.getMarketPosition()));
-		order.orderType(OrderType.MKT);
-		order.tif(TimeInForce.DAY);
-
-		TOrder placedOrder = new TOrder(contract, order, OrderStatus.Unknown);
-		Util.sendNotification("Placing close order: " + placedOrder);
-		this.ibController.placeOrModifyOrder(contract, order, placedOrder);
-	}
-
-	public void cancelOrder(int orderId) {
-		this.ibController.cancelOrder(orderId);
-	}
 	
 	public void registerForUpdates() {
 		// Register for account updates
@@ -127,7 +60,7 @@ public class Broker implements IConnectionHandler, IAccountHandler, IContractDet
 
 	@Override
 	public void contractDetails(ArrayList<ContractDetails> list) {
-		parentAccount.filterTargetContract(list);
+		parentAccount.processTargetContracts(list);
 	}
 
 	@Override
@@ -173,6 +106,10 @@ public class Broker implements IConnectionHandler, IAccountHandler, IContractDet
 	
 	private void connect() {
 		getController().connect("127.0.0.1", 7496, 0, null);
+	}
+
+	public void disconnect() {
+		getController().disconnect();
 	}
 
 	private void requestContractDetails() {
